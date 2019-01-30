@@ -38,11 +38,11 @@ V = 0.5*(V+V') + nbr_obs*Matrix{Float64}(I, nbr_obs, nbr_obs)
 
 isposdef(V) # check V matrix
 
+isinvertible(V) # check that V is invertable
+
 ϵ_tilde = rand(MvNormal(σ_true^2*V)) # generate epsilons
 
 # Generate data from model
-
-# we check easiest case when V = I
 
 Y_tilde = X_tilde*β_true + ϵ_tilde
 
@@ -51,16 +51,22 @@ Y_tilde = X_tilde*β_true + ϵ_tilde
 
 P = cholesky(V).L
 
+sum(diag(P) .== 0) # check that non of the diagonal elements are zero
+
 X = P*X_tilde
 Y = P*Y_tilde
 ϵ = P*ϵ_tilde
 
 # Set constraints for LS estimation
 
-
-nbr_rows_R = 10
+nbr_rows_R = 5
 
 R = rand(nbr_rows_R, nbr_covaraites + 1)
+
+# use this to reduce the rank of nbr_rows_R
+R[3,:] = R[1,:]
+R[4,:] = R[1,:]
+R[5,:] = R[1,:]
 
 rank(R)
 
@@ -69,10 +75,8 @@ rank(R)
 isinvertible(X'*X)
 isinvertible(R*inv(X'*X)*R')
 
-det(R*inv(X'*X)*R')
-
 β_gls = inv(X'*X)*X'*Y
-λ = inv(R*inv(X'*X)*R')*R*β_gls
+λ = inv(R*inv(X'*X)*R')*R*β_gls # we need to use pinv if R*inv(X'*X)*R' is not invertable
 β_hat = β_gls - inv((X'*X))*R'*λ
 
 println("Estimated parameters (β_gls):")
@@ -89,6 +93,5 @@ println(β_true)
 
 println("Restrictions (R*β_hat):")
 println(R*β_hat)
-
 
 # estimate sigma
