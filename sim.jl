@@ -3,6 +3,7 @@ using LinearAlgebra
 using Distributions
 using Random
 
+# code from: https://discourse.julialang.org/t/how-to-tell-if-a-thing-is-invertible/16584/9
 isinvertible(x) = issuccess(lu(x, check=false))
 
 # test
@@ -36,7 +37,7 @@ X_tilde[:,4] = 2*rand(nbr_obs)
 V = rand(nbr_obs, nbr_obs)
 V = 0.5*(V+V') + 5*nbr_obs*Matrix{Float64}(I, nbr_obs, nbr_obs)
 
-V = Symmetric(V)
+V = Symmetric(V) # define V to the symmetric matrix class
 
 isposdef(V) # check V matrix
 issymmetric(V) # check V matrix
