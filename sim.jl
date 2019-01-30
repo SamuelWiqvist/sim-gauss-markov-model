@@ -34,11 +34,16 @@ X_tilde[:,4] = 2*rand(nbr_obs)
 # generate V matrix (https://math.stackexchange.com/questions/357980/how-to-generate-random-symmetric-positive-definite-matrices-using-matlab)
 
 V = rand(nbr_obs, nbr_obs)
-V = 0.5*(V+V') + nbr_obs*Matrix{Float64}(I, nbr_obs, nbr_obs)
+V = 0.5*(V+V') + 5*nbr_obs*Matrix{Float64}(I, nbr_obs, nbr_obs)
+
+V = Symmetric(V)
 
 isposdef(V) # check V matrix
+issymmetric(V) # check V matrix
 
-isinvertible(V) # check that V is invertable
+V_inv = inv(V)
+
+isinvertible(V_inv) # check that V is invertable
 
 ϵ_tilde = rand(MvNormal(σ_true^2*V)) # generate epsilons
 
@@ -48,9 +53,10 @@ Y_tilde = X_tilde*β_true + ϵ_tilde
 
 
 # transform model
+P = cholesky(V_inv).U
 
-P = cholesky(V).L
-
+# check P
+P*V*P'
 sum(diag(P) .== 0) # check that non of the diagonal elements are zero
 
 X = P*X_tilde
@@ -59,7 +65,7 @@ Y = P*Y_tilde
 
 # Set constraints for LS estimation
 
-nbr_rows_R = 5
+nbr_rows_R = 3
 
 R = rand(nbr_rows_R, nbr_covaraites + 1)
 
@@ -76,7 +82,14 @@ isinvertible(X'*X)
 isinvertible(R*inv(X'*X)*R')
 
 β_gls = inv(X'*X)*X'*Y
-λ = inv(R*inv(X'*X)*R')*R*β_gls # we need to use pinv if R*inv(X'*X)*R' is not invertable
+
+if isinvertible(R*inv(X'*X)*R') == false
+
+    λ = pinv(R*inv(X'*X)*R')*R*β_gls # we need to use pinv if R*inv(X'*X)*R' is not invertable
+else
+    λ = inv(R*inv(X'*X)*R')*R*β_gls
+end
+
 β_hat = β_gls - inv((X'*X))*R'*λ
 
 println("Estimated parameters (β_gls):")
